@@ -64,15 +64,6 @@ const Particle = struct {
 
 	health: i32 = 100,
 
-	pub fn draw(self: Particle) void {
-		rl.drawCircleV(
-			toRaylibVector(self.pos),
-			self.radius,
-			self.color
-		);
-			// if (self.collided) rl.Color.white else self.color);
-	}
-
 	pub fn side(self: Particle, option: enum {right, top, left, bottom}) f32 {
 		return switch (option) {
 			.right => self.pos.x() + self.radius,
@@ -211,10 +202,30 @@ fn getFancyParticle(size: i8) Particle {
 	};
 }
 
-fn drawParticles(particle_buffer: []Particle) void {
-	for (particle_buffer) |p| {
-		p.draw();
+pub fn drawParticle(p: Particle) void {
+	rl.drawCircleV(
+		toRaylibVector(p.pos),
+		p.radius,
+		p.color
+	);
+		// if (self.collided) rl.Color.white else self.color);
+}
+
+fn drawParticles(particles: ParticleSet) void {
+	for (particles.list.items) |p| {
+		drawParticle(p);
 	}
+}
+
+pub fn drawParticlePreview(p: Particle) void {
+	var color = p.color;
+	color.a = 100;
+	rl.drawCircleV(
+		toRaylibVector(p.pos),
+		p.radius,
+		color
+	);
+		// if (self.collided) rl.Color.white else self.color);
 }
 
 /// Loads ZonData from a file in the current working directory
@@ -253,18 +264,20 @@ pub fn main(init: std.process.Init) !void {
 
 	while (!rl.windowShouldClose()) {
 		// Update
-		particles.update(box, config.physics);
+		const mouse_pos = toVector2(rl.getMousePosition());
 
-		const delta = rl.getMouseWheelMove();
-		particle_size += @trunc(delta);
+		const mouse_wheel = rl.getMouseWheelMove();
+		particle_size += @trunc(mouse_wheel);
 		particle_size = std.math.clamp(particle_size, 1, 6);
 
+		var particle_to_be_placed = getFancyParticle(particle_size);
+		particle_to_be_placed.pos = mouse_pos;
+
 		if (rl.isMouseButtonPressed(.left)) {
-			const pos = toVector2(rl.getMousePosition());
-			var particle = getFancyParticle(particle_size);
-			particle.pos = pos;
-			try particles.addParticle(particle, allocator);
+			try particles.addParticle(particle_to_be_placed, allocator);
 		}
+
+		particles.update(box, config.physics);
 
 		// Drawing
 		rl.beginDrawing();
@@ -272,7 +285,8 @@ pub fn main(init: std.process.Init) !void {
 
 		// drawRectangleLinesOutside(box, 10, .blue);
 		rl.drawRectangleRec(box, .black);
-		drawParticles(particles.list.items);
+		drawParticles(particles);
+		drawParticlePreview(particle_to_be_placed);
 		rl.drawFPS(40, 10);
 
 		rl.endDrawing();
