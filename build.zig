@@ -58,7 +58,7 @@ pub fn build(b: *std.Build) !void {
     if (target.query.os_tag == .emscripten) {
         const emsdk = rlz.emsdk;
         const wasm = b.addLibrary(.{
-            .name = "physics_sim",
+            .name = "particle_simulation",
             .root_module = exe_mod,
         });
         wasm.root_module.addImport("raylib", raylib);
@@ -95,6 +95,15 @@ pub fn build(b: *std.Build) !void {
 
         emrun_step.dependOn(&rename_step.step);
         run_step.dependOn(emrun_step);
+
+        // `zig build zip` — bundle the web folder into a zip (relative paths)
+        const zip_step = b.step("zip", "Create zig-out/web.zip from the web build");
+        const web_dir = b.getInstallPath(install_dir, "");
+        const zip_out = b.getInstallPath(.prefix, "web.zip");
+        const zip_cmd = b.addSystemCommand(&.{ "sh", "-c" });
+        zip_cmd.addArg(try std.fmt.allocPrint(b.allocator, "cd '{s}' && zip -r '{s}' .", .{ web_dir, zip_out }));
+        zip_cmd.step.dependOn(b.getInstallStep());
+        zip_step.dependOn(&zip_cmd.step);
     } else {
 	    // Here we define an executable. An executable needs to have a root module
 	    // which needs to expose a `main` function. While we could add a main function
