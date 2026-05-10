@@ -78,13 +78,22 @@ pub fn build(b: *std.Build) !void {
         b.getInstallStep().dependOn(emcc_step);
 
         const html_filename = try std.fmt.allocPrint(b.allocator, "{s}.html", .{wasm.name});
+
+        // Renaming physics_sim.html -> index.html
+        const rename_step = b.addSystemCommand(&.{ "mv", "-f" });
+        rename_step.addArg(b.getInstallPath(install_dir, html_filename));
+        const index_html_path = b.getInstallPath(install_dir, "index.html");
+        rename_step.addArg(index_html_path);
+        rename_step.step.dependOn(emcc_step);
+        b.getInstallStep().dependOn(&rename_step.step);
+
         const emrun_step = emsdk.emrunStep(
             b,
-            b.getInstallPath(install_dir, html_filename),
+            index_html_path,
             &.{},
         );
 
-        emrun_step.dependOn(emcc_step);
+        emrun_step.dependOn(&rename_step.step);
         run_step.dependOn(emrun_step);
     } else {
 	    // Here we define an executable. An executable needs to have a root module
