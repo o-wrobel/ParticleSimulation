@@ -1,0 +1,9 @@
+.{
+	.particle_count = 8,
+	.particle_size = 5,
+	.physics_data = .{
+		.gravity = 1000,
+		.wall_restitution = 0.99,
+		.velocity_damping = 0.999,
+	}
+}
