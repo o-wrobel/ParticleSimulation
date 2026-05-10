@@ -1,6 +1,5 @@
 .{
-	.particles= .{
-		.initial_count = 6,
+	.particles = .{
 		.size_factor = 5,
 		.minimum_size = 10,
 	},

@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const rl = @import("raylib");
 const Vector2 = @import("Vector2.zig");
 const deltaTime = rl.getFrameTime;
@@ -16,7 +17,7 @@ inline fn toVector2(vector: rl.Vector2) Vector2 {
 }
 
 const ParticleConfig = struct {
-	initial_count: usize,
+	initial_count: usize = 0,
 	size_factor: f32,
 	minimum_size: f32,
 };
@@ -29,7 +30,20 @@ const PhysicsConfig = struct {
 
 const ZonConfig = struct {
 	physics: PhysicsConfig,
-	particles: ParticleConfig
+	particles: ParticleConfig,
+
+	const defaults = ZonConfig{
+		.physics = .{
+			.gravity = 1000,
+			.wall_restitution = 0.95,
+			.velocity_damping = 0.999,
+		},
+		.particles = .{
+			.initial_count = 0,
+			.size_factor = 5,
+			.minimum_size = 10,
+		},
+	};
 };
 
 const Color = enum (i8) {
@@ -228,21 +242,19 @@ pub fn drawParticlePreview(p: Particle) void {
 		// if (self.collided) rl.Color.white else self.color);
 }
 
-/// Loads ZonData from a file in the current working directory
+/// Returns the config. On web, uses hardcoded defaults (no filesystem).
 fn loadConfig(filename: []const u8, io: std.Io, allocator: std.mem.Allocator) !ZonConfig {
-	const cwd = std.Io.Dir.cwd();
-	const string = try std.Io.Dir.readFileAlloc(cwd, io, filename, allocator, .unlimited);
-	defer allocator.free(string);
-
-	const string_sentinel = try allocator.dupeSentinel(
-		u8,
-		string,
-		0
-	);
-
-	defer allocator.free(string_sentinel);
-
-	return try std.zon.parse.fromSlice(ZonConfig, allocator, string_sentinel, null, .{});
+    if (builtin.os.tag == .emscripten) {
+        return ZonConfig.defaults;
+    } else {
+        // Native: read from disk
+        const cwd = std.Io.Dir.cwd();
+        const string = try std.Io.Dir.readFileAlloc(cwd, io, filename, allocator, .unlimited);
+        defer allocator.free(string);
+        const string_sentinel = try allocator.dupeSentinel(u8, string, 0);
+        defer allocator.free(string_sentinel);
+        return try std.zon.parse.fromSlice(ZonConfig, allocator, string_sentinel, null, .{});
+    }
 }
 
 pub fn main(init: std.process.Init) !void {
@@ -258,7 +270,7 @@ pub fn main(init: std.process.Init) !void {
 
 	const box: rl.Rectangle = .init(40, 40, 800 - 80, 800 - 80);
 
-	rl.initWindow(800, 800, "Physics simulation");
+	rl.initWindow(800, 800, "Particle Simulation");
 	defer rl.closeWindow();
 	rl.setTargetFPS(60);
 
