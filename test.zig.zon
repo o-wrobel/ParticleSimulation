@@ -1,9 +1,12 @@
 .{
-	.particle_count = 8,
-	.particle_size = 5,
-	.physics_data = .{
+	.particles= .{
+		.initial_count = 6,
+		.size_factor = 5,
+		.minimum_size = 10,
+	},
+	.physics = .{
 		.gravity = 1000,
-		.wall_restitution = 0.99,
+		.wall_restitution = 0.95,
 		.velocity_damping = 0.999,
 	}
 }

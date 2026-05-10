@@ -3,31 +3,43 @@ const rl = @import("raylib");
 const Vector2 = @import("Vector2.zig");
 const deltaTime = rl.getFrameTime;
 
+var particle_size: i8 = 1;
+const minimum_size = 10;
+const size_factor = 10;
+
 inline fn toRaylibVector(vector: Vector2) rl.Vector2 {
 	return .init(vector.x(), vector.y());
 }
 
-const PhysicsData = struct {
+inline fn toVector2(vector: rl.Vector2) Vector2 {
+	return Vector2.init(vector.x, vector.y);
+}
+
+const ParticleConfig = struct {
+	initial_count: usize,
+	size_factor: f32,
+	minimum_size: f32,
+};
+
+const PhysicsConfig = struct {
 	gravity: f32 = 1000,
 	wall_restitution: f32 = 0.99,
 	velocity_damping: f32 = 0.9999,
 };
 
 const ZonConfig = struct {
-	physics_data: PhysicsData,
-	particle_count: usize,
-	particle_size: f32,
+	physics: PhysicsConfig,
+	particles: ParticleConfig
 };
 
-const Color = enum {
-	red,
-	blue,
-	green,
-
-	yellow,
-	purple,
-	orange,
-	lime,
+const Color = enum (i8) {
+	red = 1,
+	blue = 2,
+	green = 3,
+	yellow = 4,
+	purple = 5,
+	orange = 6,
+	lime = 7,
 
 	pub fn getColor(self: Color) rl.Color {
 		return switch (self) {
@@ -74,24 +86,21 @@ const Particle = struct {
 const ParticleSet = struct {
 	list: std.ArrayList(Particle),
 
-	pub fn init(count: usize, particle_size_mult: f32, random: std.Random, allocator: std.mem.Allocator) !ParticleSet {
+	pub fn init(count: usize, random: std.Random, allocator: std.mem.Allocator) !ParticleSet {
 		// const buffer = try allocator.alloc(Particle, count);
 
 		var list: std.ArrayList(Particle) = try .initCapacity(allocator, count);
 		for (0..count) |_| {
-			const particle =  Particle{
-				.pos = .init(
-					@floatFromInt(random.intRangeAtMost(i32, 100, 700)),
-					@floatFromInt(random.intRangeAtMost(i32, 100, 500)),
-				),
-				.velocity = .init(
+			const size = random.intRangeAtMost(i8, 1, 6);
+			var particle = getFancyParticle(size);
+			particle.pos = .init(
+				@floatFromInt(random.intRangeAtMost(i32, 100, 700)),
+				@floatFromInt(random.intRangeAtMost(i32, 100, 500)),
+			);
+			particle.velocity = .init(
 				@floatFromInt(random.intRangeAtMost(i32, -100, 100)),
 				0
-				// @floatFromInt(random.intRangeAtMost(i32, -100, 100)),
-				),
-				.radius = particle_size_mult * @as(f32, @floatFromInt(random.intRangeAtMost(i32, 3, 6))),
-				.color = random.enumValue(Color).getColor(),
-			};
+			);
 			list.appendAssumeCapacity(particle);
 		}
 		return .{
@@ -103,7 +112,7 @@ const ParticleSet = struct {
 		self.list.deinit(allocator);
 	}
 
-	pub fn update(self: *ParticleSet, box: rl.Rectangle, physics_data: PhysicsData) void {
+	pub fn update(self: *ParticleSet, box: rl.Rectangle, physics_data: PhysicsConfig) void {
 		const particles = self.list.items;
 		const gravity = physics_data.gravity;
 		const velocity_damping = physics_data.velocity_damping;
@@ -194,6 +203,14 @@ const ParticleSet = struct {
 	}
 };
 
+fn getFancyParticle(size: i8) Particle {
+	const color: Color = @enumFromInt(size);
+	return Particle{
+		.radius = minimum_size + size_factor * size,
+		.color = color.getColor(),
+	};
+}
+
 fn drawParticles(particle_buffer: []Particle) void {
 	for (particle_buffer) |p| {
 		p.draw();
@@ -225,7 +242,7 @@ pub fn main(init: std.process.Init) !void {
 	// Engine Setup
 	const config = try loadConfig("test.zig.zon", io, allocator);
 
-	var particles: ParticleSet = try .init(config.particle_count, config.particle_size, random, allocator);
+	var particles: ParticleSet = try .init(config.particles.initial_count, random, allocator);
 	defer particles.deinit(allocator);
 
 	const box: rl.Rectangle = .init(40, 40, 800 - 80, 800 - 80);
@@ -236,9 +253,18 @@ pub fn main(init: std.process.Init) !void {
 
 	while (!rl.windowShouldClose()) {
 		// Update
-		particles.update(box, config.physics_data);
+		particles.update(box, config.physics);
 
-		// std.log.info("health: {}", .{particle_buffer[0].health});
+		const delta = rl.getMouseWheelMove();
+		particle_size += @trunc(delta);
+		particle_size = std.math.clamp(particle_size, 1, 6);
+
+		if (rl.isMouseButtonPressed(.left)) {
+			const pos = toVector2(rl.getMousePosition());
+			var particle = getFancyParticle(particle_size);
+			particle.pos = pos;
+			try particles.addParticle(particle, allocator);
+		}
 
 		// Drawing
 		rl.beginDrawing();
