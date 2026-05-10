@@ -3,9 +3,6 @@ const rl = @import("raylib");
 const Vector2 = @import("Vector2.zig");
 const deltaTime = rl.getFrameTime;
 
-extern "c" fn physics_test_LoadDroppedFiles(out_count: *c_uint, out_paths: *[*c][*c]u8) void;
-extern "c" fn physics_test_UnloadDroppedFiles(count: c_uint, paths: [*c][*c]u8) void;
-
 inline fn toRaylibVector(vector: Vector2) rl.Vector2 {
 	return .init(vector.x(), vector.y());
 }
@@ -16,7 +13,7 @@ const PhysicsData = struct {
 	velocity_damping: f32 = 0.9999,
 };
 
-const ZonData = struct {
+const ZonConfig = struct {
 	physics_data: PhysicsData,
 	particle_count: usize,
 	particle_size: f32,
@@ -191,6 +188,10 @@ const ParticleSet = struct {
 			}
 		}
 	}
+
+	pub fn addParticle(self: *ParticleSet, particle: Particle, allocator: std.mem.Allocator) !void {
+		try self.list.append(allocator, particle);
+	}
 };
 
 fn drawParticles(particle_buffer: []Particle) void {
@@ -199,30 +200,33 @@ fn drawParticles(particle_buffer: []Particle) void {
 	}
 }
 
+/// Loads ZonData from a file in the current working directory
+fn loadConfig(filename: []const u8, io: std.Io, allocator: std.mem.Allocator) !ZonConfig {
+	const cwd = std.Io.Dir.cwd();
+	const string = try std.Io.Dir.readFileAlloc(cwd, io, filename, allocator, .unlimited);
+	defer allocator.free(string);
+
+	const string_sentinel = try allocator.dupeSentinel(
+		u8,
+		string,
+		0
+	);
+
+	defer allocator.free(string_sentinel);
+
+	return try std.zon.parse.fromSlice(ZonConfig, allocator, string_sentinel, null, .{});
+}
+
 pub fn main(init: std.process.Init) !void {
 	const allocator = init.gpa;
 	const io = init.io;
 	const random = (std.Random.IoSource{.io = io}).interface();
 
-	const cwd = std.Io.Dir.cwd();
-	const string = try std.Io.Dir.readFileAlloc(cwd, io, "test.zig.zon", allocator, .unlimited);
-	defer allocator.free(string);
-
-	const string_sentinel = try allocator.dupeSentinel(u8, string, 0);
-	defer allocator.free(string_sentinel);
-
-	const zon_data = try std.zon.parse.fromSlice(ZonData, allocator, string_sentinel, null, .{});
-
 	// Engine Setup
+	const config = try loadConfig("test.zig.zon", io, allocator);
 
-	var particles: ParticleSet = try .init(zon_data.particle_count, zon_data.particle_size, random, allocator);
+	var particles: ParticleSet = try .init(config.particle_count, config.particle_size, random, allocator);
 	defer particles.deinit(allocator);
-
-	const test_particle = Particle{
-		.pos = .init(400, 400),
-		.radius = 10,
-		.color = .white,
-	};
 
 	const box: rl.Rectangle = .init(40, 40, 800 - 80, 800 - 80);
 
@@ -232,7 +236,7 @@ pub fn main(init: std.process.Init) !void {
 
 	while (!rl.windowShouldClose()) {
 		// Update
-		particles.update(box, zon_data.physics_data);
+		particles.update(box, config.physics_data);
 
 		// std.log.info("health: {}", .{particle_buffer[0].health});
 
