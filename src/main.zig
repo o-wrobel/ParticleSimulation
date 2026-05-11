@@ -282,6 +282,7 @@ pub fn main(init: std.process.Init) !void {
 	rl.initWindow(800, 800, "Particle Simulation");
 	defer rl.closeWindow();
 	rl.setTargetFPS(60);
+	rl.setMouseCursor(.pointing_hand);
 
 	while (!rl.windowShouldClose()) {
 		// Update
