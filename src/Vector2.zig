@@ -131,3 +131,9 @@ pub inline fn angleBetween(a: Vector2, b: Vector2) f32 {
 	const cos_theta = dot(a, b) / (length(a) * length(b));
 	return std.math.acos(@max(-1.0, @min(1.0, cos_theta)));
 }
+
+// Others
+
+pub fn format(self: Vector2, writer: *std.Io.Writer) !void {
+	try writer.print("[{}, {}]", .{self.x(), self.y()});
+}

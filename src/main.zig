@@ -205,7 +205,7 @@ const ParticleSet = struct {
 	}
 
 	pub fn addParticle(self: *ParticleSet, particle: Particle, allocator: std.mem.Allocator) !void {
-		log.debug("Added particle | pos: [{}, {}], radius: {}", .{particle.pos.x(), particle.pos.y(), particle.radius});
+		log.debug("Added particle | pos: {f}, radius: {}", .{particle.pos, particle.radius});
 		try self.list.append(allocator, particle);
 	}
 };
@@ -265,7 +265,7 @@ pub fn main(init: std.process.Init) !void {
 	const random = (std.Random.IoSource{.io = io}).interface();
 
 	// Engine Setup
-	const config = try loadConfig("test.zig.zon", io, allocator);
+	const config = try loadConfig("config.zon", io, allocator);
 
 	var particles: ParticleSet = try .init(config.particles.initial_count, random, allocator);
 	defer particles.deinit(allocator);
