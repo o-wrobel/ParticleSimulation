@@ -304,7 +304,7 @@ pub fn main(init: std.process.Init) !void {
 
 		// Drawing
 		rl.beginDrawing();
-		rl.clearBackground(.ray_white);
+		rl.clearBackground(.white);
 
 		// drawRectangleLinesOutside(box, 10, .blue);
 		rl.drawRectangleRec(box, .black);
