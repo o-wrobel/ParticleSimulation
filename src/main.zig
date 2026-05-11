@@ -1,7 +1,8 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const rl = @import("raylib");
-const Vector2 = @import("simplevectors").Vector2;
+const Vector2 = @import("Vector2");
+
 const deltaTime = rl.getFrameTime;
 
 var particle_size: i8 = 1;
