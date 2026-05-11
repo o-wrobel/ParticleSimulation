@@ -37,7 +37,7 @@ pub fn build(b: *std.Build) !void {
     	.target = target,
     	.optimize = optimize,
     });
-    const vector2_mod = simple_vec_dep.module("Vector2");
+    const vector2 = simple_vec_dep.module("Vector2");
 
     // Raylib import
     const raylib_dep = b.dependency("raylib_zig", .{
@@ -68,6 +68,7 @@ pub fn build(b: *std.Build) !void {
             .name = "particle_simulation",
             .root_module = exe_mod,
         });
+        wasm.root_module.addImport("Vector2", vector2);
         wasm.root_module.addImport("raylib", raylib);
         wasm.root_module.addImport("raygui", raygui);
 
@@ -133,12 +134,14 @@ pub fn build(b: *std.Build) !void {
 	        .root_module = exe_mod
 	    });
 
-	    // Link raylib
+		// Import Vector2 module
+	    exe.root_module.addImport("Vector2", vector2);
+
+	    // Import and Link raylib
 	    exe.root_module.linkLibrary(raylib_artifact);
 	    exe.root_module.addImport("raylib", raylib);
 	    exe.root_module.addImport("raygui", raygui);
 
-	    exe.root_module.addImport("Vector2", vector2_mod);
 
 	    // This declares intent for the executable to be installed into the
 	    // install prefix when running `zig build` (i.e. when executing the default
