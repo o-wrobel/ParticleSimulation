@@ -32,6 +32,12 @@ pub fn build(b: *std.Build) !void {
     // target and optimize options) will be listed when running `zig build --help`
     // in this directory.
 
+    // SimpleVectors import
+    const simple_vec_dep = b.dependency("simplevectors", .{
+    	.target = target,
+    });
+    const simple_vec = simple_vec_dep.module("simplevectors");
+
     // Raylib import
     const raylib_dep = b.dependency("raylib_zig", .{
         .target = target,
@@ -130,6 +136,8 @@ pub fn build(b: *std.Build) !void {
 	    exe.root_module.linkLibrary(raylib_artifact);
 	    exe.root_module.addImport("raylib", raylib);
 	    exe.root_module.addImport("raygui", raygui);
+
+	    exe.root_module.addImport("simplevectors", simple_vec);
 
 	    // This declares intent for the executable to be installed into the
 	    // install prefix when running `zig build` (i.e. when executing the default

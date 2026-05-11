@@ -40,6 +40,10 @@
             .url = "git+https://github.com/emscripten-core/emsdk?ref=4.0.9#3bcf1dcd01f040f370e10fe673a092d9ed79ebb5",
             .hash = "N-V-__8AAJl1DwBezhYo_VE6f53mPVm00R-Fk28NPW7P14EQ",
         },
+        .simplevectors = .{
+            .url = "git+https://github.com/o-wrobel/SimpleVectors.git#1e86f753547132a350518626363b3ac30d500933",
+            .hash = "simplevectors-3.1.1-FhEEeNAZAADHhA1oH49_6rzNkYQl9PONzJmrbOdSWnf7",
+        },
     },
     .paths = .{
         "build.zig",
