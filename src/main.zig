@@ -205,6 +205,12 @@ const ParticleSet = struct {
 		}
 	}
 
+	pub fn reset(self: *ParticleSet, allocator: std.mem.Allocator) !void {
+		const initial_capacity = 10;
+		self.list.deinit(allocator);
+		self.list = try std.ArrayList(Particle).initCapacity(allocator, initial_capacity);
+	}
+
 	pub fn addParticle(self: *ParticleSet, particle: Particle, allocator: std.mem.Allocator) !void {
 		log.debug("Added particle | pos: {f}, radius: {}", .{particle.pos, particle.radius});
 		try self.list.append(allocator, particle);
@@ -291,6 +297,8 @@ pub fn main(init: std.process.Init) !void {
 		if (rl.isMouseButtonPressed(.left)) {
 			try particles.addParticle(particle_to_be_placed, allocator);
 		}
+
+		if (rl.isKeyPressed(.r)) try particles.reset(allocator);
 
 		particles.update(box, config.physics);
 
