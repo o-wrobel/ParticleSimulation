@@ -28,11 +28,11 @@ const PhysicsConfig = struct {
 	velocity_damping: f32 = 0.9999,
 };
 
-const ZonConfig = struct {
+const Config = struct {
 	physics: PhysicsConfig,
 	particles: ParticleConfig,
 
-	const defaults = ZonConfig{
+	const defaults = Config{
 		.physics = .{
 			.gravity = 1000,
 			.wall_restitution = 0.95,
@@ -243,9 +243,9 @@ pub fn drawParticlePreview(p: Particle) void {
 }
 
 /// Returns the config. On web, uses hardcoded defaults (no filesystem).
-fn loadConfig(filename: []const u8, io: std.Io, allocator: std.mem.Allocator) !ZonConfig {
+fn loadConfig(filename: []const u8, io: std.Io, allocator: std.mem.Allocator) !Config {
     if (builtin.os.tag == .emscripten) {
-        return ZonConfig.defaults;
+        return Config.defaults;
     } else {
         // Native: read from disk
         const cwd = std.Io.Dir.cwd();
@@ -253,7 +253,7 @@ fn loadConfig(filename: []const u8, io: std.Io, allocator: std.mem.Allocator) !Z
         defer allocator.free(string);
         const string_sentinel = try allocator.dupeSentinel(u8, string, 0);
         defer allocator.free(string_sentinel);
-        return try std.zon.parse.fromSlice(ZonConfig, allocator, string_sentinel, null, .{});
+        return try std.zon.parse.fromSlice(Config, allocator, string_sentinel, null, .{});
     }
 }
 
