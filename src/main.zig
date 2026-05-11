@@ -89,6 +89,7 @@ const Particle = struct {
 };
 
 const ParticleSet = struct {
+	const log = std.log.scoped(.ParticleSet);
 	list: std.ArrayList(Particle),
 
 	pub fn init(count: usize, random: std.Random, allocator: std.mem.Allocator) !ParticleSet {
@@ -204,6 +205,7 @@ const ParticleSet = struct {
 	}
 
 	pub fn addParticle(self: *ParticleSet, particle: Particle, allocator: std.mem.Allocator) !void {
+		log.debug("Added particle | pos: [{}, {}], radius: {}", .{particle.pos.x(), particle.pos.y(), particle.radius});
 		try self.list.append(allocator, particle);
 	}
 };
