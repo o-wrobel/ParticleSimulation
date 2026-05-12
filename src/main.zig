@@ -55,7 +55,7 @@ fn getParticleWithPalette(size: i8, palette: ColorPalette) Particle {
 	};
 }
 
-pub fn drawParticle(p: Particle) void {
+fn drawParticle(p: Particle) void {
 	rl.drawCircleV(
 		toRaylibVector(p.pos),
 		p.radius,
@@ -70,7 +70,7 @@ fn drawParticles(particles: ParticleSet) void {
 	}
 }
 
-pub fn drawParticlePreview(p: Particle) void {
+fn drawParticlePreview(p: Particle) void {
 	var color = p.color;
 	color.a = 100;
 	rl.drawCircleV(
@@ -81,19 +81,14 @@ pub fn drawParticlePreview(p: Particle) void {
 		// if (self.collided) rl.Color.white else self.color);
 }
 
-/// Returns the config. On web, uses hardcoded defaults (no filesystem).
+/// Loads and returns a config from a file
 fn loadConfig(filename: []const u8, io: std.Io, allocator: std.mem.Allocator) !Config {
-    if (builtin.os.tag == .emscripten) {
-        return Config.defaults;
-    } else {
-        // Native: read from disk
-        const cwd = std.Io.Dir.cwd();
-        const string = try std.Io.Dir.readFileAlloc(cwd, io, filename, allocator, .unlimited);
-        defer allocator.free(string);
-        const string_sentinel = try allocator.dupeSentinel(u8, string, 0);
-        defer allocator.free(string_sentinel);
-        return try std.zon.parse.fromSlice(Config, allocator, string_sentinel, null, .{});
-    }
+    const cwd = std.Io.Dir.cwd();
+    const string = try std.Io.Dir.readFileAlloc(cwd, io, filename, allocator, .unlimited);
+    defer allocator.free(string);
+    const string_sentinel = try allocator.dupeSentinel(u8, string, 0);
+    defer allocator.free(string_sentinel);
+    return try std.zon.parse.fromSlice(Config, allocator, string_sentinel, null, .{});
 }
 
 pub fn main(init: std.process.Init) !void {
@@ -102,7 +97,9 @@ pub fn main(init: std.process.Init) !void {
 	const random = (std.Random.IoSource{.io = io}).interface();
 
 	// Engine Setup
-	const config = try loadConfig("config.zon", io, allocator);
+	const config = if (builtin.os.tag == .emscripten)
+		Config.defaults
+		else try loadConfig("config.zon", io, allocator);
 
 	var particles: ParticleSet = try getParticleSet(config, random, allocator);
 	defer particles.deinit(allocator);
