@@ -1,4 +1,13 @@
 .{
+	// Atom-8 color palette
+	.colors = .{
+		0xb30000,
+		0xff8000,
+		0xffffaa,
+		0x6cd900,
+		0x08000,
+		0x404080,
+		},
 	.particles = .{
 		.size_factor = 5,
 		.minimum_size = 10,

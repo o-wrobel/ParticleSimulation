@@ -13,7 +13,7 @@ const Physics = phys.Physics;
 
 const deltaTime = rl.getFrameTime;
 
-const sizes_amount = 7;
+const sizes_amount = 6;
 
 physics: Physics,
 particles: Particles,
@@ -46,13 +46,26 @@ pub const ColorPalette = struct {
 		return palette;
 	}
 
+	pub fn fromHex(hex_colors: ColorConfig) ColorPalette {
+		var palette: ColorPalette = .{};
+		for (hex_colors, 0..) |hex, i| {
+			palette.colors[i] = .{
+				.r = @intCast((hex >> 16) & 0xFF),
+				.g = @intCast((hex >> 8) & 0xFF),
+				.b = @intCast(hex & 0xFF),
+				.a = 0xFF,
+			};
+		}
+		return palette;
+	}
+
 	pub fn getColor(self: ColorPalette, index: usize) rl.Color {
 		return self.colors[index];
 	}
 };
 
-/// Slice of hex color strings, like #FF00FF
-pub const ColorConfig = []const [7]u8;
+/// Array of hex color values, like 0xFF00FF
+pub const ColorConfig = [sizes_amount]u32;
 
 pub const Particles = struct {
 	initial_count: usize = 0,
@@ -61,7 +74,15 @@ pub const Particles = struct {
 };
 
 pub const ZonConfig = struct {
-	physics: Physics = .{},
-	particles: Particles = .{},
-	// color_palette: ColorConfig,
+	physics: Physics,
+	particles: Particles,
+	colors: ColorConfig,
 };
+
+pub fn zonToConfig(zon: ZonConfig) Config {
+	return Config{
+		.physics = zon.physics,
+		.particles = zon.particles,
+		.color_palette = ColorPalette.fromHex(zon.colors),
+	};
+}

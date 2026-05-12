@@ -10,6 +10,7 @@ const Particle = physics.Particle;
 const PhysicsConfig = physics.Physics;
 
 const Config = @import("Config.zig");
+const ZonConfig = Config.ZonConfig;
 const ColorPalette = Config.ColorPalette;
 
 const deltaTime = rl.getFrameTime;
@@ -83,7 +84,14 @@ fn loadConfig(filename: []const u8, io: std.Io, allocator: std.mem.Allocator) !C
     defer allocator.free(string);
     const string_sentinel = try allocator.dupeSentinel(u8, string, 0);
     defer allocator.free(string_sentinel);
-    return try std.zon.parse.fromSlice(Config, allocator, string_sentinel, null, .{});
+
+    var diag: std.zon.parse.Diagnostics = .{};
+    defer diag.deinit(allocator);
+    const zon = std.zon.parse.fromSlice(ZonConfig, allocator, string_sentinel, &diag, .{}) catch |err| {
+        std.debug.print("Failed to parse config.zon:\n{}\n", .{diag});
+        return err;
+    };
+    return Config.zonToConfig(zon);
 }
 
 pub fn main(init: std.process.Init) !void {
