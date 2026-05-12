@@ -8,6 +8,7 @@ const deltaTime = rl.getFrameTime;
 var particle_size: i8 = 1;
 const minimum_size = 10;
 const size_factor = 10;
+const sizes_amount = 7;
 
 inline fn toRaylibVector(vector: Vector2) rl.Vector2 {
 	return .init(vector.x(), vector.y());
@@ -16,6 +17,28 @@ inline fn toRaylibVector(vector: Vector2) rl.Vector2 {
 inline fn toVector2(vector: rl.Vector2) Vector2 {
 	return Vector2.init(vector.x, vector.y);
 }
+
+const ColorPalette = struct {
+	colors: [sizes_amount]rl.Color = @splat(rl.Color.white),
+
+	pub fn init() ColorPalette {
+		var palette: ColorPalette = .{};
+		palette.colors[0] = .red;
+		palette.colors[1] = .blue;
+		palette.colors[2] = .green;
+		palette.colors[3] = .yellow;
+		palette.colors[4] = .violet;
+		palette.colors[5] = .orange;
+		return palette;
+	}
+
+	pub fn getColor(self: ColorPalette, index: usize) rl.Color {
+		return self.colors[index];
+	}
+};
+
+/// Slice of hex color strings, like #FF00FF
+const ColorConfig = []const [7]u8;
 
 const ParticleConfig = struct {
 	initial_count: usize = 0,
@@ -32,6 +55,7 @@ const PhysicsConfig = struct {
 const Config = struct {
 	physics: PhysicsConfig,
 	particles: ParticleConfig,
+	color_palette: ColorPalette = .init(),
 
 	const defaults = Config{
 		.physics = .{
@@ -47,26 +71,10 @@ const Config = struct {
 	};
 };
 
-const Color = enum (i8) {
-	red = 1,
-	blue = 2,
-	green = 3,
-	yellow = 4,
-	purple = 5,
-	orange = 6,
-	lime = 7,
-
-	pub fn getColor(self: Color) rl.Color {
-		return switch (self) {
-			.red => rl.Color.red,
-			.blue => rl.Color.blue,
-			.green => rl.Color.green,
-			.yellow => rl.Color.yellow,
-			.purple => rl.Color.violet,
-			.orange => rl.Color.orange,
-			.lime => rl.Color.lime,
-		};
-	}
+const ZonConfig = struct {
+	physics: PhysicsConfig = .{},
+	particles: ParticleConfig = .{},
+	// color_palette: ColorConfig,
 };
 
 const Particle = struct {
@@ -99,7 +107,10 @@ const ParticleSet = struct {
 		var list: std.ArrayList(Particle) = try .initCapacity(allocator, count);
 		for (0..count) |_| {
 			const size = random.intRangeAtMost(i8, 1, 6);
-			var particle = getFancyParticle(size);
+			var particle = Particle{
+				.radius = minimum_size + size_factor * size,
+				.color = .white,
+			};
 			particle.pos = .init(
 				@floatFromInt(random.intRangeAtMost(i32, 100, 700)),
 				@floatFromInt(random.intRangeAtMost(i32, 100, 500)),
@@ -217,11 +228,17 @@ const ParticleSet = struct {
 	}
 };
 
-fn getFancyParticle(size: i8) Particle {
-	const color: Color = @enumFromInt(size);
+fn setColorPalette(particles: ParticleSet, palette: ColorPalette) void {
+	for (particles.list.items) |*p| {
+		p.color = palette.getColor(@divTrunc(@as(usize, @trunc(p.radius)) - minimum_size, size_factor));
+	}
+}
+
+fn getFancyParticle(size: i8, palette: ColorPalette) Particle {
+	const color = palette.getColor(@intCast(size-1));
 	return Particle{
 		.radius = minimum_size + size_factor * size,
-		.color = color.getColor(),
+		.color = color,
 	};
 }
 
@@ -277,6 +294,8 @@ pub fn main(init: std.process.Init) !void {
 	var particles: ParticleSet = try .init(config.particles.initial_count, random, allocator);
 	defer particles.deinit(allocator);
 
+	setColorPalette(particles, config.color_palette);
+
 	const box: rl.Rectangle = .init(40, 40, 800 - 80, 800 - 80);
 
 	rl.initWindow(800, 800, "Particle Simulation");
@@ -292,7 +311,7 @@ pub fn main(init: std.process.Init) !void {
 		particle_size += @trunc(mouse_wheel);
 		particle_size = std.math.clamp(particle_size, 1, 6);
 
-		var particle_to_be_placed = getFancyParticle(particle_size);
+		var particle_to_be_placed = getFancyParticle(particle_size, config.color_palette);
 		particle_to_be_placed.pos = mouse_pos;
 
 		if (rl.isMouseButtonPressed(.left)) {
