@@ -14,11 +14,6 @@ const ColorPalette = Config.ColorPalette;
 
 const deltaTime = rl.getFrameTime;
 
-var particle_size: i8 = 1;
-const minimum_size = 10;
-const size_factor = 10;
-const sizes_amount = 7;
-
 inline fn toRaylibVector(vector: Vector2) rl.Vector2 {
 	return .init(vector.x(), vector.y());
 }
@@ -32,7 +27,7 @@ fn getParticleSet(config: Config, random: std.Random, allocator: std.mem.Allocat
 	var particles = try ParticleSet.init(config.particles.initial_count, allocator);
 	for (0..config.particles.initial_count) |_| {
 		const size = random.intRangeAtMost(i8, 1, 6);
-		var particle = getParticleWithPalette(size, config.color_palette);
+		var particle = getParticleWithPalette(size, config);
 		particle.pos = .init(
 			@floatFromInt(random.intRangeAtMost(i32, 100, 700)),
 			@floatFromInt(random.intRangeAtMost(i32, 100, 500)),
@@ -47,10 +42,10 @@ fn getParticleSet(config: Config, random: std.Random, allocator: std.mem.Allocat
 }
 
 /// Returns a particle with a color from the palette based on the size.
-fn getParticleWithPalette(size: i8, palette: ColorPalette) Particle {
-	const color = palette.getColor(@intCast(size-1));
+fn getParticleWithPalette(size: i8, config: Config) Particle {
+	const color = config.color_palette.getColor(@intCast(size-1));
 	return Particle{
-		.radius = minimum_size + size_factor * size,
+		.radius = config.particles.minimum_size + config.particles.size_factor * size,
 		.color = color,
 	};
 }
@@ -106,6 +101,8 @@ pub fn main(init: std.process.Init) !void {
 
 	const box: rl.Rectangle = .init(40, 40, 800 - 80, 800 - 80);
 
+	var particle_size: i8 = 1;
+
 	rl.initWindow(800, 800, "Particle Simulation");
 	defer rl.closeWindow();
 	rl.setTargetFPS(60);
@@ -119,7 +116,7 @@ pub fn main(init: std.process.Init) !void {
 		particle_size += @trunc(mouse_wheel);
 		particle_size = std.math.clamp(particle_size, 1, 6);
 
-		var particle_to_be_placed = getParticleWithPalette(particle_size, config.color_palette);
+		var particle_to_be_placed = getParticleWithPalette(particle_size, config);
 		particle_to_be_placed.pos = mouse_pos;
 
 		if (rl.isMouseButtonPressed(.left)) {

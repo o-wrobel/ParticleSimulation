@@ -13,9 +13,6 @@ const Physics = phys.Physics;
 
 const deltaTime = rl.getFrameTime;
 
-var particle_size: i8 = 1;
-const minimum_size = 10;
-const size_factor = 10;
 const sizes_amount = 7;
 
 physics: Physics,

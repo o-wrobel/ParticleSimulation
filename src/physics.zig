@@ -5,11 +5,6 @@ const Vector2 = @import("Vector2");
 
 const deltaTime = rl.getFrameTime;
 
-// stub
-var particle_size: i8 = 1;
-const minimum_size = 10;
-const size_factor = 10;
-
 pub const Physics = struct {
 	gravity: f32 = 1000,
 	wall_restitution: f32 = 0.99,
