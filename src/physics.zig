@@ -42,26 +42,8 @@ pub const ParticleSet = struct {
 	const log = std.log.scoped(.ParticleSet);
 	list: std.ArrayList(Particle),
 
-	pub fn init(count: usize, random: std.Random, allocator: std.mem.Allocator) !ParticleSet {
-		// const buffer = try allocator.alloc(Particle, count);
-
-		var list: std.ArrayList(Particle) = try .initCapacity(allocator, count);
-		for (0..count) |_| {
-			const size = random.intRangeAtMost(i8, 1, 6);
-			var particle = Particle{
-				.radius = minimum_size + size_factor * size,
-				.color = .white,
-			};
-			particle.pos = .init(
-				@floatFromInt(random.intRangeAtMost(i32, 100, 700)),
-				@floatFromInt(random.intRangeAtMost(i32, 100, 500)),
-			);
-			particle.velocity = .init(
-				@floatFromInt(random.intRangeAtMost(i32, -100, 100)),
-				0
-			);
-			list.appendAssumeCapacity(particle);
-		}
+	pub fn init(count: usize, allocator: std.mem.Allocator) !ParticleSet {
+		const list: std.ArrayList(Particle) = try .initCapacity(allocator, count);
 		return .{
 			.list = list,
 		};

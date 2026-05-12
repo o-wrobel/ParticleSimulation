@@ -27,13 +27,27 @@ inline fn toVector2(vector: rl.Vector2) Vector2 {
 	return Vector2.init(vector.x, vector.y);
 }
 
-fn setColorPalette(particles: ParticleSet, palette: ColorPalette) void {
-	for (particles.list.items) |*p| {
-		p.color = palette.getColor(@divTrunc(@as(usize, @trunc(p.radius)) - minimum_size, size_factor));
+/// Returns a particle set with particles placed randomly within the box.
+fn getParticleSet(config: Config, random: std.Random, allocator: std.mem.Allocator) !ParticleSet {
+	var particles = try ParticleSet.init(config.particles.initial_count, allocator);
+	for (0..config.particles.initial_count) |_| {
+		const size = random.intRangeAtMost(i8, 1, 6);
+		var particle = getParticleWithPalette(size, config.color_palette);
+		particle.pos = .init(
+			@floatFromInt(random.intRangeAtMost(i32, 100, 700)),
+			@floatFromInt(random.intRangeAtMost(i32, 100, 500)),
+		);
+		particle.velocity = .init(
+			@floatFromInt(random.intRangeAtMost(i32, -100, 100)),
+			0
+		);
+		particles.list.appendAssumeCapacity(particle);
 	}
+	return particles;
 }
 
-fn getFancyParticle(size: i8, palette: ColorPalette) Particle {
+/// Returns a particle with a color from the palette based on the size.
+fn getParticleWithPalette(size: i8, palette: ColorPalette) Particle {
 	const color = palette.getColor(@intCast(size-1));
 	return Particle{
 		.radius = minimum_size + size_factor * size,
@@ -90,10 +104,8 @@ pub fn main(init: std.process.Init) !void {
 	// Engine Setup
 	const config = try loadConfig("config.zon", io, allocator);
 
-	var particles: ParticleSet = try .init(config.particles.initial_count, random, allocator);
+	var particles: ParticleSet = try getParticleSet(config, random, allocator);
 	defer particles.deinit(allocator);
-
-	setColorPalette(particles, config.color_palette);
 
 	const box: rl.Rectangle = .init(40, 40, 800 - 80, 800 - 80);
 
@@ -110,7 +122,7 @@ pub fn main(init: std.process.Init) !void {
 		particle_size += @trunc(mouse_wheel);
 		particle_size = std.math.clamp(particle_size, 1, 6);
 
-		var particle_to_be_placed = getFancyParticle(particle_size, config.color_palette);
+		var particle_to_be_placed = getParticleWithPalette(particle_size, config.color_palette);
 		particle_to_be_placed.pos = mouse_pos;
 
 		if (rl.isMouseButtonPressed(.left)) {
