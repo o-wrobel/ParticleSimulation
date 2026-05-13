@@ -54,6 +54,31 @@ pub const ParticleSet = struct {
 		const velocity_damping = physics_data.velocity_damping;
 		const wall_restitution = physics_data.wall_restitution;
 
+		// Apply velocity and handle collisions with box
+		for (particles) |*p| {
+			p.collided = false;
+			p.pos = p.pos.add(p.velocity.scale(deltaTime()));
+			p.velocity.yRef().* += gravity * deltaTime();
+
+			p.velocity = p.velocity.scale(velocity_damping);
+
+			if (p.side(.left) < box.x) {
+				p.velocity.xRef().* = -p.velocity.x() * wall_restitution;
+				p.pos.xRef().* = box.x + p.radius;
+			} else if (p.side(.right) > box.x + box.width) {
+				p.velocity.xRef().* = -p.velocity.x() * wall_restitution;
+				p.pos.xRef().* = box.x + box.width - p.radius;
+			}
+
+			if (p.side(.top) < box.y) {
+				p.velocity.yRef().* = -p.velocity.y() * wall_restitution;
+				p.pos.yRef().* = box.y + p.radius;
+			} else if (p.side(.bottom) > box.y + box.height) {
+				p.velocity.yRef().* = -p.velocity.y() * wall_restitution;
+				p.pos.yRef().* = box.y + box.height - p.radius;
+			}
+		}
+
 		// Particle-particle collision
 		for (particles, 0..) |*a, i| {
 			for (particles[i + 1 ..]) |*b| {
@@ -108,30 +133,6 @@ pub const ParticleSet = struct {
 			}
 		}
 
-		// Apply velocity and handle collisions with box
-		for (particles) |*p| {
-			p.collided = false;
-			p.pos = p.pos.add(p.velocity.scale(deltaTime()));
-			p.velocity.yRef().* += gravity * deltaTime();
-
-			p.velocity = p.velocity.scale(velocity_damping);
-
-			if (p.side(.left) < box.x) {
-				p.velocity.xRef().* = -p.velocity.x() * wall_restitution;
-				p.pos.xRef().* = box.x + p.radius;
-			} else if (p.side(.right) > box.x + box.width) {
-				p.velocity.xRef().* = -p.velocity.x() * wall_restitution;
-				p.pos.xRef().* = box.x + box.width - p.radius;
-			}
-
-			if (p.side(.top) < box.y) {
-				p.velocity.yRef().* = -p.velocity.y() * wall_restitution;
-				p.pos.yRef().* = box.y + p.radius;
-			} else if (p.side(.bottom) > box.y + box.height) {
-				p.velocity.yRef().* = -p.velocity.y() * wall_restitution;
-				p.pos.yRef().* = box.y + box.height - p.radius;
-			}
-		}
 	}
 
 	pub fn reset(self: *ParticleSet, allocator: std.mem.Allocator) !void {
