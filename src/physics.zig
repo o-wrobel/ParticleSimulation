@@ -8,9 +8,9 @@ const deltaTime = rl.getFrameTime;
 pub const Simulation = struct {
 	const log = std.log.scoped(.Simulation);
 	particles: std.ArrayList(Particle),
-	box: rl.Rectangle,
+	box: Box,
 
-	pub fn init(box: rl.Rectangle, allocator: std.mem.Allocator) !Simulation {
+	pub fn init(box: Box, allocator: std.mem.Allocator) !Simulation {
 		return .{
 			.particles = try std.ArrayList(Particle).initCapacity(allocator, 0),
 			.box = box,
@@ -128,7 +128,12 @@ pub const Physics = struct {
 	velocity_damping: f32 = 0.9999,
 };
 
-// TODO: Add Box object
+pub const Box = struct {
+	x: f32,
+	y: f32,
+	width: f32,
+	height: f32,
+};
 
 pub const Particle = struct {
 	radius: f32,

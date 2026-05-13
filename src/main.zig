@@ -7,6 +7,8 @@ const physics = @import("physics.zig");
 
 const Simulation = physics.Simulation;
 const Particle = physics.Particle;
+const Box = physics.Box;
+
 const PhysicsConfig = physics.Physics;
 
 const Config = @import("Config.zig");
@@ -23,7 +25,7 @@ inline fn toVector2(vector: rl.Vector2) Vector2 {
 	return Vector2.init(vector.x, vector.y);
 }
 
-/// Returns a particle set with particles placed randomly within the box.
+/// Returns a particle buffer with particles placed randomly within the box.
 fn getParticleSet(config: Config, random: std.Random, allocator: std.mem.Allocator) ![]Particle {
 	var particles = try allocator.alloc(Particle, config.particles.initial_count);
 	for (0..config.particles.initial_count) |i| {
@@ -77,6 +79,16 @@ fn drawParticlePreview(p: Particle) void {
 		// if (self.collided) rl.Color.white else self.color);
 }
 
+fn drawBox(box: Box, color: rl.Color) void {
+	rl.drawRectangle(
+		@trunc(box.x),
+		@trunc(box.y),
+		@trunc(box.width),
+		@trunc(box.height),
+		color
+	);
+}
+
 /// Loads and returns a config from a file
 fn loadConfig(filename: []const u8, io: std.Io, allocator: std.mem.Allocator) !Config {
     const cwd = std.Io.Dir.cwd();
@@ -113,7 +125,12 @@ pub fn main(init: std.process.Init) !void {
 		Config.defaults
 		else try loadConfig("config.zon", io, allocator);
 
-	const box: rl.Rectangle = .init(40, 40, 800 - 80, 800 - 80);
+	const box: Box = .{
+		.x = 40,
+		.y = 40,
+		.width = 800 - 80,
+		.height = 800 - 80,
+	};
 
 	var simulation = try Simulation.init(box, allocator);
 	defer simulation.deinit(allocator);
@@ -156,8 +173,7 @@ pub fn main(init: std.process.Init) !void {
 		rl.beginDrawing();
 		rl.clearBackground(.white);
 
-		// drawRectangleLinesOutside(box, 10, .blue);
-		rl.drawRectangleRec(box, .black);
+		drawBox(box, .black);
 		drawParticles(simulation.particles.items);
 		drawParticlePreview(particle_to_be_placed);
 		try drawFPS(.black, 40, 10, allocator);
