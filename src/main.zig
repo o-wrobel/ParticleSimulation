@@ -24,7 +24,11 @@ inline fn toVector2(vector: rl.Vector2) Vector2 {
 
 /// Returns a particle buffer with particles placed randomly within the box
 fn getParticleSet(config: Config, random: std.Random, allocator: std.mem.Allocator) ![]Particle {
-	var particles = try allocator.alloc(Particle, config.particles.initial_count);
+	var particles = allocator.alloc(Particle, config.particles.initial_count)
+		catch |err| {
+			std.log.err("Failed to allocate particles: {}", .{err});
+			return &.{};
+		};
 	for (0..config.particles.initial_count) |i| {
 		const size = random.intRangeAtMost(i8, 1, 6);
 		var particle = getParticle(size, config);
@@ -103,12 +107,12 @@ fn loadConfig(filename: []const u8, io: std.Io, allocator: std.mem.Allocator) !C
     return Config.zonToConfig(zon);
 }
 
-fn drawFPS(color: rl.Color, pos_x: i32, pos_y: i32, allocator: std.mem.Allocator) !void {
-	// TODO: Remove allocations with fixed buffer
-	const string = try std.fmt.allocPrint(allocator, "{} FPS", .{rl.getFPS()});
-	const string_sentinel = try allocator.dupeSentinel(u8, string, 0);
-	defer allocator.free(string);
-	defer allocator.free(string_sentinel);
+fn drawFPS(color: rl.Color, pos_x: i32, pos_y: i32) void {
+	var string: [12]u8 = undefined;
+	const formatted = std.fmt.bufPrint(&string, "{} FPS", .{rl.getFPS()})
+		catch unreachable;
+	string[formatted.len] = 0;
+	const string_sentinel: [:0]const u8 = string[0..formatted.len :0];
 	rl.drawText(string_sentinel, pos_x, pos_y, 20, color);
 }
 
@@ -168,15 +172,28 @@ pub fn main(init: std.process.Init) !void {
 		const color = getColorForParticle(config, particle_size);
 
 		if (rl.isMouseButtonPressed(.left)) {
-			try simulation.addParticle(particle_to_be_placed, allocator);
-			try colors.append(allocator, color);
+			simulation.addParticle(particle_to_be_placed, allocator)
+				catch |err| {
+					std.log.err("Failed to add particle: {}", .{err});
+				};
+			colors.append(allocator, color)
+				catch |err| {
+					std.log.err("Failed to add color: {}", .{err});
+				};
 			std.log.debug("Added particle | pos: {f}, radius: {}", .{particle_to_be_placed.pos, particle_to_be_placed.radius});
 		}
 
 		if (rl.isKeyPressed(.r)) {
-			try simulation.reset(allocator);
+			simulation.reset(allocator)
+				catch |err| {
+					std.log.err("Failed to reset simulation: {}", .{err});
+				};
 			colors.deinit(allocator);
-			colors = try std.ArrayList(rl.Color).initCapacity(allocator, 0);
+			colors = std.ArrayList(rl.Color).initCapacity(allocator, 0)
+				catch |err| {
+					std.log.err("Failed to reset simulation: {}", .{err});
+					return ;
+				};
 		}
 
 		simulation.update(config.physics, deltaTime());
@@ -188,7 +205,7 @@ pub fn main(init: std.process.Init) !void {
 		drawBox(box, .black);
 		drawParticles(simulation.particles.items, colors.items);
 		drawParticlePreview(particle_to_be_placed, getColorForParticle(config, particle_size));
-		try drawFPS(.black, 40, 10, allocator);
+		drawFPS(.black, 40, 10);
 
 		rl.endDrawing();
 	}
