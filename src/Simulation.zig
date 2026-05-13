@@ -4,9 +4,6 @@ const builtin = @import("builtin");
 
 const Vector2 = @import("Vector2");
 
-// TODO: Remove Raylib dependencies
-const rl = @import("raylib");
-
 const log = std.log.scoped(.Simulation);
 
 particles: std.ArrayList(Particle),
@@ -141,7 +138,6 @@ pub const Particle = struct {
 	pos: Vector2 = .zero(),
 	velocity: Vector2 = .zero(),
 
-	color: rl.Color,
 	collided: bool = false,
 
 	health: i32 = 100,

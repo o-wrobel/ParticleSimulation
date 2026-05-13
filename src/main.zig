@@ -8,8 +8,6 @@ const Simulation = @import("Simulation.zig");
 const Particle = Simulation.Particle;
 const Box = Simulation.Box;
 
-const PhysicsConfig = Simulation.Physics;
-
 const Config = @import("Config.zig");
 const ZonConfig = Config.ZonConfig;
 const ColorPalette = Config.ColorPalette;
@@ -24,12 +22,12 @@ inline fn toVector2(vector: rl.Vector2) Vector2 {
 	return Vector2.init(vector.x, vector.y);
 }
 
-/// Returns a particle buffer with particles placed randomly within the box.
+/// Returns a particle buffer with particles placed randomly within the box
 fn getParticleSet(config: Config, random: std.Random, allocator: std.mem.Allocator) ![]Particle {
 	var particles = try allocator.alloc(Particle, config.particles.initial_count);
 	for (0..config.particles.initial_count) |i| {
 		const size = random.intRangeAtMost(i8, 1, 6);
-		var particle = getParticleWithPalette(size, config);
+		var particle = getParticle(size, config);
 		particle.pos = .init(
 			@floatFromInt(random.intRangeAtMost(i32, 100, 700)),
 			@floatFromInt(random.intRangeAtMost(i32, 100, 500)),
@@ -43,39 +41,39 @@ fn getParticleSet(config: Config, random: std.Random, allocator: std.mem.Allocat
 	return particles;
 }
 
-/// Returns a particle with a color from the palette based on the size.
-fn getParticleWithPalette(size: i8, config: Config) Particle {
-	const color = config.color_palette.getColor(@intCast(size-1));
+/// Returns a particle with a size determined by the given config
+fn getParticle(size: i8, config: Config) Particle {
 	return Particle{
 		.radius = config.particles.minimum_size + config.particles.size_factor * size,
-		.color = color,
 	};
 }
 
-fn drawParticle(p: Particle) void {
-	rl.drawCircleV(
-		toRaylibVector(p.pos),
-		p.radius,
-		p.color
-	);
-		// if (self.collided) rl.Color.white else self.color);
+fn getColorForParticle(config: Config, size: i8) rl.Color {
+	return config.color_palette.getColor(@intCast(size-1));
 }
 
-fn drawParticles(particles: []Particle) void {
-	for (particles) |p| {
-		drawParticle(p);
-	}
-}
-
-fn drawParticlePreview(p: Particle) void {
-	var color = p.color;
-	color.a = 100;
+fn drawParticle(p: Particle, color: rl.Color) void {
 	rl.drawCircleV(
 		toRaylibVector(p.pos),
 		p.radius,
 		color
 	);
-		// if (self.collided) rl.Color.white else self.color);
+}
+
+fn drawParticlePreview(p: Particle, color: rl.Color) void {
+	var preview_color = color;
+	preview_color.a = 100;
+	rl.drawCircleV(
+		toRaylibVector(p.pos),
+		p.radius,
+		preview_color
+	);
+}
+
+fn drawParticles(particles: []Particle, colors: []rl.Color) void {
+	for (particles, colors) |p, color| {
+		drawParticle(p, color);
+	}
 }
 
 fn drawBox(box: Box, color: rl.Color) void {
@@ -114,6 +112,11 @@ fn drawFPS(color: rl.Color, pos_x: i32, pos_y: i32, allocator: std.mem.Allocator
 	rl.drawText(string_sentinel, pos_x, pos_y, 20, color);
 }
 
+fn addParticle(simulation: *Simulation, particle: Particle, colors: std.ArrayList(rl.Color), allocator: std.mem.Allocator) !void {
+	try simulation.addParticle(particle, allocator);
+	colors.append(allocator, .gray);
+}
+
 pub fn main(init: std.process.Init) !void {
 	const allocator = init.gpa;
 	const io = init.io;
@@ -142,6 +145,9 @@ pub fn main(init: std.process.Init) !void {
 		}
 	}
 
+	var colors: std.ArrayList(rl.Color) = try .initCapacity(allocator, config.particles.initial_count);
+	defer colors.deinit(allocator);
+
 	var particle_size: i8 = 1;
 
 	rl.initWindow(800, 800, "Particle Simulation");
@@ -157,14 +163,20 @@ pub fn main(init: std.process.Init) !void {
 		particle_size += @trunc(mouse_wheel);
 		particle_size = std.math.clamp(particle_size, 1, 6);
 
-		var particle_to_be_placed = getParticleWithPalette(particle_size, config);
+		var particle_to_be_placed = getParticle(particle_size, config);
 		particle_to_be_placed.pos = mouse_pos;
+		const color = getColorForParticle(config, particle_size);
 
 		if (rl.isMouseButtonPressed(.left)) {
 			try simulation.addParticle(particle_to_be_placed, allocator);
+			try colors.append(allocator, color);
 		}
 
-		if (rl.isKeyPressed(.r)) try simulation.reset(allocator);
+		if (rl.isKeyPressed(.r)) {
+			try simulation.reset(allocator);
+			colors.deinit(allocator);
+			colors = try std.ArrayList(rl.Color).initCapacity(allocator, 0);
+		}
 
 		simulation.update(config.physics, deltaTime());
 
@@ -173,8 +185,8 @@ pub fn main(init: std.process.Init) !void {
 		rl.clearBackground(.white);
 
 		drawBox(box, .black);
-		drawParticles(simulation.particles.items);
-		drawParticlePreview(particle_to_be_placed);
+		drawParticles(simulation.particles.items, colors.items);
+		drawParticlePreview(particle_to_be_placed, getColorForParticle(config, particle_size));
 		try drawFPS(.black, 40, 10, allocator);
 
 		rl.endDrawing();
