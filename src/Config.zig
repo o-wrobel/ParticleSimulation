@@ -26,8 +26,8 @@ pub const defaults = Config{
 	},
 	.particles = .{
 		.initial_count = 0,
-		.size_factor = 5,
-		.minimum_size = 10,
+		.size_factor = 10,
+		.minimum_size = 3,
 	},
 	.color_palette = ColorPalette.fromHex(
 		.{
