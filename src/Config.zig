@@ -3,9 +3,10 @@ pub const Config = @This();
 const std = @import("std");
 const builtin = @import("builtin");
 const rl = @import("raylib");
-const Vector2 = @import("Vector2");
 
-const Simulation = @import("Simulation");
+const lpe = @import("little_physics_engine");
+const Simulation = lpe.Simulation;
+const Vector2 = lpe.Vector2;
 
 const Particle = Simulation.Particle;
 const Physics = Simulation.Constants;
