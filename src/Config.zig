@@ -17,7 +17,7 @@ const sizes_amount = 6;
 
 physics: Physics,
 particles: Particles,
-color_palette: ColorPalette = .init(),
+color_palette: ColorPalette,
 
 pub const defaults = Config{
 	.physics = .{
@@ -30,21 +30,20 @@ pub const defaults = Config{
 		.size_factor = 5,
 		.minimum_size = 10,
 	},
+	.color_palette = ColorPalette.fromHex(
+		.{
+			0xffff00,
+			0x00ff00,
+			0x00ffff,
+			0x0000ff,
+			0xff00ff,
+			0xff0000,
+		}
+	)
 };
 
 pub const ColorPalette = struct {
 	colors: [sizes_amount]rl.Color = @splat(rl.Color.white),
-
-	pub fn init() ColorPalette {
-		var palette: ColorPalette = .{};
-		palette.colors[0] = .red;
-		palette.colors[1] = .blue;
-		palette.colors[2] = .green;
-		palette.colors[3] = .yellow;
-		palette.colors[4] = .violet;
-		palette.colors[5] = .orange;
-		return palette;
-	}
 
 	pub fn fromHex(hex_colors: ColorConfig) ColorPalette {
 		var palette: ColorPalette = .{};
