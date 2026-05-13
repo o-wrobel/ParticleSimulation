@@ -166,7 +166,7 @@ pub fn main(init: std.process.Init) !void {
 
 		if (rl.isKeyPressed(.r)) try simulation.reset(allocator);
 
-		simulation.update(config.physics);
+		simulation.update(config.physics, deltaTime());
 
 		// Drawing
 		rl.beginDrawing();

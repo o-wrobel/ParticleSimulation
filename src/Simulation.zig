@@ -6,7 +6,6 @@ const Vector2 = @import("Vector2");
 
 // TODO: Remove Raylib dependencies
 const rl = @import("raylib");
-const deltaTime = rl.getFrameTime;
 
 const log = std.log.scoped(.Simulation);
 
@@ -24,7 +23,7 @@ pub fn deinit(self: *Simulation, allocator: std.mem.Allocator) void {
 	self.particles.deinit(allocator);
 }
 
-pub fn update(self: *Simulation, physics_data: Constants) void {
+pub fn update(self: *Simulation, physics_data: Constants, delta_time: f32) void {
 	const particles = self.particles.items;
 	const box = self.box;
 
@@ -35,8 +34,8 @@ pub fn update(self: *Simulation, physics_data: Constants) void {
 	// Apply velocity and handle collisions with box
 	for (particles) |*p| {
 		p.collided = false;
-		p.pos = p.pos.add(p.velocity.scale(deltaTime()));
-		p.velocity.yRef().* += gravity * deltaTime();
+		p.pos = p.pos.add(p.velocity.scale(delta_time));
+		p.velocity.yRef().* += gravity * delta_time;
 
 		p.velocity = p.velocity.scale(velocity_damping);
 
