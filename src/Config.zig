@@ -5,11 +5,10 @@ const builtin = @import("builtin");
 const rl = @import("raylib");
 const Vector2 = @import("Vector2");
 
-const phys = @import("physics.zig");
+const Simulation = @import("Simulation.zig");
 
-const ParticleSet = phys.ParticleSet;
-const Particle = phys.Particle;
-const Physics = phys.Constants;
+const Particle = Simulation.Particle;
+const Physics = Simulation.Constants;
 
 const deltaTime = rl.getFrameTime;
 

@@ -1,9 +1,11 @@
 pub const Simulation = @This();
 const std = @import("std");
 const builtin = @import("builtin");
-const rl = @import("raylib");
+
 const Vector2 = @import("Vector2");
 
+// TODO: Remove Raylib dependencies
+const rl = @import("raylib");
 const deltaTime = rl.getFrameTime;
 
 const log = std.log.scoped(.Simulation);

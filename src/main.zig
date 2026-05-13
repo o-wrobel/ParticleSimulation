@@ -3,13 +3,12 @@ const builtin = @import("builtin");
 const rl = @import("raylib");
 const Vector2 = @import("Vector2");
 
-const physics = @import("physics.zig");
+const Simulation = @import("Simulation.zig");
 
-const Simulation = physics.Simulation;
-const Particle = physics.Particle;
-const Box = physics.Box;
+const Particle = Simulation.Particle;
+const Box = Simulation.Box;
 
-const PhysicsConfig = physics.Constants;
+const PhysicsConfig = Simulation.Physics;
 
 const Config = @import("Config.zig");
 const ZonConfig = Config.ZonConfig;
