@@ -11,7 +11,6 @@ const Box = Simulation.Box;
 
 const Config = @import("Config.zig");
 const ZonConfig = Config.ZonConfig;
-const ColorPalette = Config.ColorPalette;
 
 const deltaTime = rl.getFrameTime;
 

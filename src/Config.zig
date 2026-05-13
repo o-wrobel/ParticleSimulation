@@ -6,7 +6,6 @@ const rl = @import("raylib");
 
 const lpe = @import("little_physics_engine");
 const Simulation = lpe.Simulation;
-const Vector2 = lpe.Vector2;
 
 const Particle = Simulation.Particle;
 const Physics = Simulation.Constants;
