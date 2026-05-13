@@ -41,8 +41,12 @@
             .hash = "N-V-__8AAJl1DwBezhYo_VE6f53mPVm00R-Fk28NPW7P14EQ",
         },
         .simple_vectors = .{
-            .url = "git+https://github.com/o-wrobel/SimpleVectors.git#0aff01a1cfed800e8cdd6af2e3a8450f02a6ee85",
-            .hash = "simple_vectors-4.0.0-LZed2yYZAABDuKg44KHspA4tM9l-7hE2EVwdi3rmqp9e",
+            .url = "git+https://github.com/o-wrobel/SimpleVectors.git#9d145c49558e44428f44bbf82534dbddcb5b82ef",
+            .hash = "simple_vectors-4.1.0-LZed268ZAAD24OfbAgVqL0vnLefwXlj1XWhP5MvTvGTF",
+        },
+        .little_physics_engine = .{
+            .url = "git+https://github.com/o-wrobel/LittlePhysicsEngine.git#0e7391172f6367a2b1b0b5098d72d0e49047e59a",
+            .hash = "little_physics_engine-0.0.1-Z9zbjF4UAACw5GUdHMnjv8xMl1KYYma0ck-crFaD4hYk",
         },
     },
     .paths = .{

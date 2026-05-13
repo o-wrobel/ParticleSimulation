@@ -39,6 +39,12 @@ pub fn build(b: *std.Build) !void {
 	});
 	const vector2 = simple_vec_dep.module("Vector2");
 
+	const lpe_dep = b.dependency("little_physics_engine", .{
+		.target = target,
+		.optimize = optimize,
+	});
+	const simulation_mod = lpe_dep.module("Simulation");
+
 	// Raylib import
 	const raylib_dep = b.dependency("raylib_zig", .{
 		.target = target,
@@ -68,7 +74,14 @@ pub fn build(b: *std.Build) !void {
 			.name = "particle_simulation",
 			.root_module = exe_mod,
 		});
+
+		// Import Vector2 module
 		wasm.root_module.addImport("Vector2", vector2);
+
+		// Import Simulation module
+		wasm.root_module.addImport("Simulation", simulation_mod);
+
+		// Import raylib modules
 		wasm.root_module.addImport("raylib", raylib);
 		wasm.root_module.addImport("raygui", raygui);
 
@@ -136,6 +149,9 @@ pub fn build(b: *std.Build) !void {
 
 		// Import Vector2 module
 		exe.root_module.addImport("Vector2", vector2);
+
+		// Import Simulation module
+		exe.root_module.addImport("Simulation", simulation_mod);
 
 		// Import and Link raylib
 		exe.root_module.linkLibrary(raylib_artifact);

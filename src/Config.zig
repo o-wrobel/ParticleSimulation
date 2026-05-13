@@ -5,7 +5,7 @@ const builtin = @import("builtin");
 const rl = @import("raylib");
 const Vector2 = @import("Vector2");
 
-const Simulation = @import("Simulation.zig");
+const Simulation = @import("Simulation");
 
 const Particle = Simulation.Particle;
 const Physics = Simulation.Constants;
