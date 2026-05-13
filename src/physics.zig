@@ -5,51 +5,26 @@ const Vector2 = @import("Vector2");
 
 const deltaTime = rl.getFrameTime;
 
-pub const Physics = struct {
-	gravity: f32 = 1000,
-	wall_restitution: f32 = 0.99,
-	velocity_damping: f32 = 0.9999,
-};
+pub const Simulation = struct {
+	const log = std.log.scoped(.Simulation);
+	particles: std.ArrayList(Particle),
+	box: rl.Rectangle,
 
-// TODO: Add Box object
-
-pub const Particle = struct {
-	radius: f32,
-	pos: Vector2 = .zero(),
-	velocity: Vector2 = .zero(),
-
-	color: rl.Color,
-	collided: bool = false,
-
-	health: i32 = 100,
-
-	pub fn side(self: Particle, option: enum {right, top, left, bottom}) f32 {
-		return switch (option) {
-			.right => self.pos.x() + self.radius,
-			.top => self.pos.y() - self.radius,
-			.left => self.pos.x() - self.radius,
-			.bottom => self.pos.y() + self.radius,
-		};
-	}
-};
-
-pub const ParticleSet = struct {
-	const log = std.log.scoped(.ParticleSet);
-	list: std.ArrayList(Particle),
-
-	pub fn init(count: usize, allocator: std.mem.Allocator) !ParticleSet {
-		const list: std.ArrayList(Particle) = try .initCapacity(allocator, count);
+	pub fn init(box: rl.Rectangle, allocator: std.mem.Allocator) !Simulation {
 		return .{
-			.list = list,
+			.particles = try std.ArrayList(Particle).initCapacity(allocator, 0),
+			.box = box,
 		};
 	}
 
-	pub fn deinit(self: *ParticleSet, allocator: std.mem.Allocator) void {
-		self.list.deinit(allocator);
+	pub fn deinit(self: *Simulation, allocator: std.mem.Allocator) void {
+		self.particles.deinit(allocator);
 	}
 
-	pub fn update(self: *ParticleSet, box: rl.Rectangle, physics_data: Physics) void {
-		const particles = self.list.items;
+	pub fn update(self: *Simulation, physics_data: Physics) void {
+		const particles = self.particles.items;
+		const box = self.box;
+
 		const gravity = physics_data.gravity;
 		const velocity_damping = physics_data.velocity_damping;
 		const wall_restitution = physics_data.wall_restitution;
@@ -135,14 +110,42 @@ pub const ParticleSet = struct {
 
 	}
 
-	pub fn reset(self: *ParticleSet, allocator: std.mem.Allocator) !void {
+	pub fn reset(self: *Simulation, allocator: std.mem.Allocator) !void {
 		const initial_capacity = 10;
-		self.list.deinit(allocator);
-		self.list = try std.ArrayList(Particle).initCapacity(allocator, initial_capacity);
+		self.particles.deinit(allocator);
+		self.particles = try std.ArrayList(Particle).initCapacity(allocator, initial_capacity);
 	}
 
-	pub fn addParticle(self: *ParticleSet, particle: Particle, allocator: std.mem.Allocator) !void {
+	pub fn addParticle(self: *Simulation, particle: Particle, allocator: std.mem.Allocator) !void {
 		log.debug("Added particle | pos: {f}, radius: {}", .{particle.pos, particle.radius});
-		try self.list.append(allocator, particle);
+		try self.particles.append(allocator, particle);
+	}
+};
+
+pub const Physics = struct {
+	gravity: f32 = 1000,
+	wall_restitution: f32 = 0.99,
+	velocity_damping: f32 = 0.9999,
+};
+
+// TODO: Add Box object
+
+pub const Particle = struct {
+	radius: f32,
+	pos: Vector2 = .zero(),
+	velocity: Vector2 = .zero(),
+
+	color: rl.Color,
+	collided: bool = false,
+
+	health: i32 = 100,
+
+	pub fn side(self: Particle, option: enum {right, top, left, bottom}) f32 {
+		return switch (option) {
+			.right => self.pos.x() + self.radius,
+			.top => self.pos.y() - self.radius,
+			.left => self.pos.x() - self.radius,
+			.bottom => self.pos.y() + self.radius,
+		};
 	}
 };

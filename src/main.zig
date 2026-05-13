@@ -5,7 +5,7 @@ const Vector2 = @import("Vector2");
 
 const physics = @import("physics.zig");
 
-const ParticleSet = physics.ParticleSet;
+const Simulation = physics.Simulation;
 const Particle = physics.Particle;
 const PhysicsConfig = physics.Physics;
 
@@ -24,9 +24,9 @@ inline fn toVector2(vector: rl.Vector2) Vector2 {
 }
 
 /// Returns a particle set with particles placed randomly within the box.
-fn getParticleSet(config: Config, random: std.Random, allocator: std.mem.Allocator) !ParticleSet {
-	var particles = try ParticleSet.init(config.particles.initial_count, allocator);
-	for (0..config.particles.initial_count) |_| {
+fn getParticleSet(config: Config, random: std.Random, allocator: std.mem.Allocator) ![]Particle {
+	var particles = try allocator.alloc(Particle, config.particles.initial_count);
+	for (0..config.particles.initial_count) |i| {
 		const size = random.intRangeAtMost(i8, 1, 6);
 		var particle = getParticleWithPalette(size, config);
 		particle.pos = .init(
@@ -37,7 +37,7 @@ fn getParticleSet(config: Config, random: std.Random, allocator: std.mem.Allocat
 			@floatFromInt(random.intRangeAtMost(i32, -100, 100)),
 			0
 		);
-		particles.list.appendAssumeCapacity(particle);
+		particles[i] = particle;
 	}
 	return particles;
 }
@@ -60,8 +60,8 @@ fn drawParticle(p: Particle) void {
 		// if (self.collided) rl.Color.white else self.color);
 }
 
-fn drawParticles(particles: ParticleSet) void {
-	for (particles.list.items) |p| {
+fn drawParticles(particles: []Particle) void {
+	for (particles) |p| {
 		drawParticle(p);
 	}
 }
@@ -113,10 +113,18 @@ pub fn main(init: std.process.Init) !void {
 		Config.defaults
 		else try loadConfig("config.zon", io, allocator);
 
-	var particles: ParticleSet = try getParticleSet(config, random, allocator);
-	defer particles.deinit(allocator);
-
 	const box: rl.Rectangle = .init(40, 40, 800 - 80, 800 - 80);
+
+	var simulation = try Simulation.init(box, allocator);
+	defer simulation.deinit(allocator);
+
+	if (config.particles.initial_count > 0) {
+		const particles = try getParticleSet(config, random, allocator);
+		defer allocator.free(particles);
+		for (particles) |particle| {
+			try simulation.addParticle(particle, allocator);
+		}
+	}
 
 	var particle_size: i8 = 1;
 
@@ -137,12 +145,12 @@ pub fn main(init: std.process.Init) !void {
 		particle_to_be_placed.pos = mouse_pos;
 
 		if (rl.isMouseButtonPressed(.left)) {
-			try particles.addParticle(particle_to_be_placed, allocator);
+			try simulation.addParticle(particle_to_be_placed, allocator);
 		}
 
-		if (rl.isKeyPressed(.r)) try particles.reset(allocator);
+		if (rl.isKeyPressed(.r)) try simulation.reset(allocator);
 
-		particles.update(box, config.physics);
+		simulation.update(config.physics);
 
 		// Drawing
 		rl.beginDrawing();
@@ -150,7 +158,7 @@ pub fn main(init: std.process.Init) !void {
 
 		// drawRectangleLinesOutside(box, 10, .blue);
 		rl.drawRectangleRec(box, .black);
-		drawParticles(particles);
+		drawParticles(simulation.particles.items);
 		drawParticlePreview(particle_to_be_placed);
 		try drawFPS(.black, 40, 10, allocator);
 
