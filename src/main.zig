@@ -170,6 +170,7 @@ pub fn main(init: std.process.Init) !void {
 		if (rl.isMouseButtonPressed(.left)) {
 			try simulation.addParticle(particle_to_be_placed, allocator);
 			try colors.append(allocator, color);
+			std.log.debug("Added particle | pos: {f}, radius: {}", .{particle_to_be_placed.pos, particle_to_be_placed.radius});
 		}
 
 		if (rl.isKeyPressed(.r)) {

@@ -4,8 +4,6 @@ const builtin = @import("builtin");
 
 const Vector2 = @import("Vector2");
 
-const log = std.log.scoped(.Simulation);
-
 particles: std.ArrayList(Particle),
 box: Box,
 
@@ -116,7 +114,6 @@ pub fn reset(self: *Simulation, allocator: std.mem.Allocator) !void {
 }
 
 pub fn addParticle(self: *Simulation, particle: Particle, allocator: std.mem.Allocator) !void {
-	log.debug("Added particle | pos: {f}, radius: {}", .{particle.pos, particle.radius});
 	try self.particles.append(allocator, particle);
 }
 
