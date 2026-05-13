@@ -94,6 +94,15 @@ fn loadConfig(filename: []const u8, io: std.Io, allocator: std.mem.Allocator) !C
     return Config.zonToConfig(zon);
 }
 
+fn drawFPS(color: rl.Color, pos_x: i32, pos_y: i32, allocator: std.mem.Allocator) !void {
+	// TODO: Remove allocations with fixed buffer
+	const string = try std.fmt.allocPrint(allocator, "{} FPS", .{rl.getFPS()});
+	const string_sentinel = try allocator.dupeSentinel(u8, string, 0);
+	defer allocator.free(string);
+	defer allocator.free(string_sentinel);
+	rl.drawText(string_sentinel, pos_x, pos_y, 20, color);
+}
+
 pub fn main(init: std.process.Init) !void {
 	const allocator = init.gpa;
 	const io = init.io;
@@ -143,7 +152,7 @@ pub fn main(init: std.process.Init) !void {
 		rl.drawRectangleRec(box, .black);
 		drawParticles(particles);
 		drawParticlePreview(particle_to_be_placed);
-		rl.drawFPS(40, 10);
+		try drawFPS(.black, 40, 10, allocator);
 
 		rl.endDrawing();
 	}
