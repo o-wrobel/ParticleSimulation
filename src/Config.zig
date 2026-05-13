@@ -9,7 +9,7 @@ const phys = @import("physics.zig");
 
 const ParticleSet = phys.ParticleSet;
 const Particle = phys.Particle;
-const Physics = phys.Physics;
+const Physics = phys.Constants;
 
 const deltaTime = rl.getFrameTime;
 

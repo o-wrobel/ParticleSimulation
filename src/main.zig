@@ -9,7 +9,7 @@ const Simulation = physics.Simulation;
 const Particle = physics.Particle;
 const Box = physics.Box;
 
-const PhysicsConfig = physics.Physics;
+const PhysicsConfig = physics.Constants;
 
 const Config = @import("Config.zig");
 const ZonConfig = Config.ZonConfig;
