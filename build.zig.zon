@@ -25,8 +25,8 @@
             .hash = "N-V-__8AAJl1DwBezhYo_VE6f53mPVm00R-Fk28NPW7P14EQ",
         },
         .little_physics_engine = .{
-            .url = "git+https://github.com/o-wrobel/LittlePhysicsEngine.git#81a8d3529177c2ffdcc63e7fb174cb42508c8ccc",
-            .hash = "little_physics_engine-0.2.0-Z9zbjHAUAAAPRhbojjjsLSV2UI_fAz-Y210eQiaoib2f",
+            .url = "git+https://github.com/o-wrobel/LittlePhysicsEngine.git#f5cd2e59ce10056e1699a6e9cc0bbfd9f19b4ba7",
+            .hash = "little_physics_engine-0.2.1-Z9zbjHAUAAAlT3AAx-OS0mvjJzO3eUuqrCBgF5MVnFlP",
         },
     },
     .paths = .{

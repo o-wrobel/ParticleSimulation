@@ -14,10 +14,6 @@ const ZonConfig = Config.ZonConfig;
 
 const deltaTime = rl.getFrameTime;
 
-inline fn toVector2(vector: rl.Vector2) Vector2 {
-	return Vector2.init(vector.x, vector.y);
-}
-
 /// Returns a particle buffer with particles placed randomly within the box
 fn getParticleSet(config: Config, random: std.Random, allocator: std.mem.Allocator) ![]Particle {
 	var particles = allocator.alloc(Particle, config.particles.initial_count)
@@ -122,6 +118,9 @@ pub fn main(init: std.process.Init) !void {
 	const io = init.io;
 	const random = (std.Random.IoSource{.io = io}).interface();
 
+	const temp = (.{20, 20});
+	_=temp;
+
 	// Engine Setup
 	const config = if (builtin.os.tag == .emscripten)
 		Config.defaults
@@ -157,7 +156,7 @@ pub fn main(init: std.process.Init) !void {
 
 	while (!rl.windowShouldClose()) {
 		// Update
-		const mouse_pos = toVector2(rl.getMousePosition());
+		const mouse_pos = Vector2.initAny(rl.getMousePosition());
 
 		const mouse_wheel = rl.getMouseWheelMove();
 		particle_size += @trunc(mouse_wheel);
