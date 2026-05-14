@@ -14,10 +14,6 @@ const ZonConfig = Config.ZonConfig;
 
 const deltaTime = rl.getFrameTime;
 
-inline fn toRaylibVector(vector: Vector2) rl.Vector2 {
-	return .init(vector.x(), vector.y());
-}
-
 inline fn toVector2(vector: rl.Vector2) Vector2 {
 	return Vector2.init(vector.x, vector.y);
 }
@@ -58,7 +54,7 @@ fn getColorForParticle(config: Config, size: i8) rl.Color {
 
 fn drawParticle(p: Particle, color: rl.Color) void {
 	rl.drawCircleV(
-		toRaylibVector(p.pos),
+		.initVec(p.pos.data),
 		p.radius,
 		color
 	);
@@ -68,7 +64,7 @@ fn drawParticlePreview(p: Particle, color: rl.Color) void {
 	var preview_color = color;
 	preview_color.a = 100;
 	rl.drawCircleV(
-		toRaylibVector(p.pos),
+		.initVec(p.pos.data),
 		p.radius,
 		preview_color
 	);
