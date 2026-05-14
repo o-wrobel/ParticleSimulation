@@ -147,48 +147,60 @@ pub fn main(init: std.process.Init) !void {
 	var colors: std.ArrayList(rl.Color) = try .initCapacity(allocator, config.particles.initial_count);
 	defer colors.deinit(allocator);
 
-	var particle_size: i8 = 1;
-
 	rl.initWindow(800, 800, "Particle Simulation");
 	defer rl.closeWindow();
 	rl.setTargetFPS(60);
 	rl.setMouseCursor(.pointing_hand);
 
+	var particle_size: i8 = 1;
+
+	var drag_start: Vector2 = undefined;
+	var drag_end: Vector2 = undefined;
+
 	while (!rl.windowShouldClose()) {
 		// Update
-		const mouse_pos = Vector2.initAny(rl.getMousePosition());
-
 		const mouse_wheel = rl.getMouseWheelMove();
 		particle_size += @trunc(mouse_wheel);
 		particle_size = std.math.clamp(particle_size, 1, 6);
 
-		var particle_to_be_placed = getParticle(particle_size, config);
-		particle_to_be_placed.pos = mouse_pos;
+		const mouse_pos = Vector2.initAny(rl.getMousePosition());
 		const color = getColorForParticle(config, particle_size);
 
+		var preview_particle = getParticle(particle_size, config);
+		preview_particle.pos = mouse_pos;
+
 		if (rl.isMouseButtonPressed(.left)) {
-			simulation.addParticle(particle_to_be_placed, allocator)
-				catch |err| {
-					std.log.err("Failed to add particle: {}", .{err});
-				};
-			colors.append(allocator, color)
-				catch |err| {
-					std.log.err("Failed to add color: {}", .{err});
-				};
-			std.log.debug("Added particle | pos: {f}, radius: {}", .{particle_to_be_placed.pos, particle_to_be_placed.radius});
+			drag_start = mouse_pos;
+		}
+
+		if (rl.isMouseButtonDown(.left)) {
+			preview_particle.pos = drag_start;
+		}
+
+		drag_end = mouse_pos;
+
+		if (rl.isMouseButtonReleased(.left)) {
+			const velocity = Vector2.sub(drag_end, drag_start).scale(2);
+			var new_particle = preview_particle;
+			new_particle.pos = drag_start;
+			new_particle.velocity = velocity;
+			simulation.addParticle(new_particle, allocator) catch |err| {
+				std.log.err("Failed to add particle: {}", .{err});
+			};
+			colors.append(allocator, color) catch |err| {
+				std.log.err("Failed to add color: {}", .{err});
+			};
 		}
 
 		if (rl.isKeyPressed(.r)) {
-			simulation.reset(allocator)
-				catch |err| {
-					std.log.err("Failed to reset simulation: {}", .{err});
-				};
+			simulation.reset(allocator) catch |err| {
+				std.log.err("Failed to reset simulation: {}", .{err});
+			};
 			colors.deinit(allocator);
-			colors = std.ArrayList(rl.Color).initCapacity(allocator, 0)
-				catch |err| {
-					std.log.err("Failed to reset simulation: {}", .{err});
-					return ;
-				};
+			colors = std.ArrayList(rl.Color).initCapacity(allocator, 0) catch |err| {
+				std.log.err("Failed to re-init colors after reset: {}", .{err});
+				return;
+			};
 		}
 
 		simulation.update(config.physics, deltaTime());
@@ -199,7 +211,10 @@ pub fn main(init: std.process.Init) !void {
 
 		drawBox(box, .black);
 		drawParticles(simulation.particles.items, colors.items);
-		drawParticlePreview(particle_to_be_placed, getColorForParticle(config, particle_size));
+		drawParticlePreview(preview_particle, getColorForParticle(config, particle_size));
+		if (rl.isMouseButtonDown(.left)) {
+			rl.drawLineEx(.initVec(drag_start.data), .initVec(drag_end.data), 2.0, .white);
+		}
 		drawFPS(.black, 40, 10);
 
 		rl.endDrawing();
