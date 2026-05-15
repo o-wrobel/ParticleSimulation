@@ -147,6 +147,7 @@ pub fn main(init: std.process.Init) !void {
 	var colors: std.ArrayList(rl.Color) = try .initCapacity(allocator, config.particles.initial_count);
 	defer colors.deinit(allocator);
 
+	rl.setConfigFlags(.{ .msaa_4x_hint = true });
 	rl.initWindow(800, 800, "Particle Simulation");
 	defer rl.closeWindow();
 	rl.setTargetFPS(60);
