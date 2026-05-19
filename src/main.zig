@@ -1,6 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const rl = @import("raylib");
+const rgui = @import("raygui");
 
 const lpe = @import("little_physics_engine");
 const Simulation = lpe.Simulation;
@@ -152,11 +153,14 @@ pub fn main(init: std.process.Init) !void {
 	defer rl.closeWindow();
 	rl.setTargetFPS(60);
 	rl.setMouseCursor(.pointing_hand);
+	rgui.setIconScale(2);
 
 	var particle_size: i8 = 1;
 
 	var drag_start: Vector2 = undefined;
 	var drag_end: Vector2 = undefined;
+
+	var particles_should_reset: bool = false;
 
 	while (!rl.windowShouldClose()) {
 		// Update
@@ -193,7 +197,7 @@ pub fn main(init: std.process.Init) !void {
 			};
 		}
 
-		if (rl.isKeyPressed(.r)) {
+		if (rl.isKeyPressed(.r) or particles_should_reset) {
 			simulation.reset(allocator) catch |err| {
 				std.log.err("Failed to reset simulation: {}", .{err});
 			};
@@ -205,6 +209,7 @@ pub fn main(init: std.process.Init) !void {
 		}
 
 		simulation.update(config.physics, deltaTime());
+		particles_should_reset = false;
 
 		// Drawing
 		rl.beginDrawing();
@@ -216,6 +221,17 @@ pub fn main(init: std.process.Init) !void {
 		if (rl.isMouseButtonDown(.left)) {
 			rl.drawLineEx(.initVec(drag_start.data), .initVec(drag_end.data), 2.0, .white);
 		}
+
+		// UI
+		// Restart button
+		particles_should_reset = rgui.button(
+			.init(
+				@floatFromInt(rl.getScreenWidth() - 2*(4 + 32)),
+				4,
+				32,
+				32),
+			"#211#"
+		);
 		drawFPS(.black, 40, 10);
 
 		rl.endDrawing();
